@@ -5,9 +5,10 @@
 ```yml 
 git clone git@github.com:harkhanid/infrastructure.git
 ```
-2. open 01 folder in your terminal
+2. export your aws profile in which you want to create VPC. 
+3. open 01 folder in your terminal
 
-3. run the following commands
+4. run the following commands
 ```yml
 packer init
 packer plan
