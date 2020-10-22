@@ -38,3 +38,99 @@ variable "public_cidr_route" {
 variable "route_table_name" {
      default = "web-public-route"
 }
+
+# Assignment 5
+
+variable "app_sec_group"{
+    type= list
+    default=[]
+}
+
+variable "app_ports_ingress"{
+    type=list
+    default=[22,443,80,3000]
+}
+
+variable "app_ports_egress"{
+    type=list
+    default=[0,3306]
+}
+
+variable "db_ports_ingress"{
+    type=list
+    default=[3306]
+}
+
+variable "db_ports_egress"{
+    type=list
+    default=[0]
+}
+
+variable "pub_v4_block"{
+    type = list
+    default=["0.0.0.0/0"]
+}
+
+variable "pub_v6_block"{
+    type = list
+    default=["::/0"]
+}
+
+variable "tcp" {
+    type = string
+    default="tcp"
+}
+
+variable "app_name" {
+    type = string
+    default = "application"
+}
+variable "db_name" {
+    type = string
+    default = "database"
+}
+
+variable "s3_vars"{
+    type = "map"
+
+    default = {
+        bucket = "webapp.dharmik.harkhani"
+        acl = "private"
+        lf_enabled= true
+        trans_days = 30
+        trans_storage_class = "STANDARD_IA"
+        force_destroy = true
+        versioning = true
+        env = "prod"
+        algo="AES256"
+    }
+}
+
+variable "rds_subnet_grp" {
+    type = string
+    default = "dbsubnetgroup"
+}
+
+variable "rds_config" {
+    type = map
+
+    default = {
+        allocated_storage    = 20
+        storage_type         = "gp2"
+        engine               = "mysql"
+        engine_version       = "5.7"
+        instance_class       = "db.t3.micro"
+        multi_az             = false
+        identifier           = "csye6225-f20"
+        name                 = "webapp_database"
+        username             = "csye6225fall2020"
+        password             = "Dharmik$123"
+        parameter_group_name = "default.mysql5.7"
+        publicly_accessible  = false
+    }
+}
+
+variable "iam_profile" {
+    type = string
+    default = "ec2_s3_profile"
+}
