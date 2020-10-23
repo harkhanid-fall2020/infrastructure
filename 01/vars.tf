@@ -147,7 +147,7 @@ variable "ec2_config"{
         volume_size = 20
         encrypted = false
         name = "webapp"
-        key_name = "csye6225-aws"
+        key_name = "csye6225_prod_aws"
     }
 }
 
