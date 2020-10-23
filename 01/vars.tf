@@ -134,3 +134,32 @@ variable "iam_profile" {
     type = string
     default = "ec2_s3_profile"
 }
+
+variable "ec2_config"{
+    type = map
+    default = {
+        ami = "ami-0fb2d8a51156ea1fc"
+        associate_public_ip_address = true
+        instance_type = "t2.micro"
+        delete_on_termination = true
+        device_name = "/dev/sdf"
+        volume_type = "gp2"
+        volume_size = 20
+        encrypted = false
+        name = "webapp"
+        key_name = "csye6225-aws"
+    }
+}
+
+variable "dynamoDB_config" {
+    type = "map"
+    default = {
+        name = "csye6225"
+        hash_key = "id"
+        billing_mode = "PROVISIONED"
+        read_capacity = 5
+        write_capacity = 5
+        nameid = "id"
+        type = "S"
+    }
+}
