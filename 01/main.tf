@@ -262,7 +262,8 @@ resource "aws_iam_role_policy" "WebAppS3" {
             ],
             "Effect": "Allow",
             "Resource": [
-                "arn:aws:s3:::webapp.dharmik.harkhani"
+                "arn:aws:s3:::${var.s3_vars.bucket}",
+                "arn:aws:s3:::${var.s3_vars.bucket}/*"
             ]
         }
     ]
@@ -294,7 +295,7 @@ resource "aws_iam_instance_profile" "ec2_s3profile" {
 }
 
 resource "aws_instance" "ec2webapp" {
-  ami                           = var.ec2_config.ami
+  ami                           = var.ami
   vpc_security_group_ids        = [aws_security_group.application.id]
   associate_public_ip_address   = var.ec2_config.associate_public_ip_address
   instance_type                 = var.ec2_config.instance_type

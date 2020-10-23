@@ -3,6 +3,10 @@
      default = "us-east-1"
  }
 
+ variable "ami" {
+     default= "ami-0fb2d8a51156ea1fc"
+ }
+
  variable "vpc_cidr" {
      default = "10.0.0.0/16"
  }
