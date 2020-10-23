@@ -241,11 +241,12 @@ resource "aws_db_instance" "default" {
   parameter_group_name = var.rds_config.parameter_group_name
   publicly_accessible  = var.rds_config.publicly_accessible
   vpc_security_group_ids = [aws_security_group.database.id]
+  skip_final_snapshot	= true
 }
 
 resource "aws_iam_role_policy" "WebAppS3" {
   name        = "WebAppS3"
-  role = aws_iam_role.Ec2_CSYE6225.id
+  role = aws_iam_role.Ec2_CSYE6225.name
 
   policy = <<EOF
 {
@@ -253,7 +254,11 @@ resource "aws_iam_role_policy" "WebAppS3" {
     "Statement": [
         {
             "Action": [
-                "s3:*"
+                "s3:DeleteObject",
+                "s3:GetObject",
+                "s3:ListBucket",
+                "s3:PutObject",
+                "s3:PutObjectAcl"
             ],
             "Effect": "Allow",
             "Resource": [
@@ -289,45 +294,36 @@ resource "aws_iam_instance_profile" "ec2_s3profile" {
 }
 
 resource "aws_instance" "ec2webapp" {
-  ami = "ami-0817d428a6fb68645"
-  vpc_security_group_ids = [aws_security_group.application.id]
-  associate_public_ip_address = true
-  instance_type = "t2.micro"
+  ami                           = var.ec2_config.ami
+  vpc_security_group_ids        = [aws_security_group.application.id]
+  associate_public_ip_address   = var.ec2_config.associate_public_ip_address
+  instance_type                 = var.ec2_config.instance_type
   subnet_id = aws_subnet.subnet1.id
   ebs_block_device {
-    delete_on_termination = true
-    device_name = "/dev/sdf"
-    volume_type = "gp2"
-    volume_size = 8
-    encrypted = false
+    delete_on_termination = var.ec2_config.delete_on_termination
+    device_name = var.ec2_config.device_name
+    volume_type = var.ec2_config.volume_type
+    volume_size = var.ec2_config.volume_size
+    encrypted = var.ec2_config.encrypted
   }
   tags = {
-    "Name" = "webapp"
+    "Name" = var.ec2_config.name
   }
   iam_instance_profile = aws_iam_instance_profile.ec2_s3profile.id
-  key_name = "csye6225-aws"
-  user_data = <<EOF
-    #!/bin/bash
-    sudo apt-get update
-      echo 'db_name=webapp_database' >> .env
-      echo 'db_user=csye6225fall2020' >> .env
-      echo 'db_password=Dharmik$123' >> .env
-      echo 'db_host=csye6225-f20.c4yrra4awabf.us-east-1.rds.amazonaws.com' >> .env 
-      echo 'bucket_name=webapp.dharmik.harkhani' >> .env
-      echo 'region=us-east-1' >> .env
-    EOF
+  key_name = var.ec2_config.key_name
+  user_data = "${file("${path.module}/userdata.sh")}"
 }
 
 # dynamoDB table
 resource "aws_dynamodb_table" "demoCheck" {
-  name = "csye6225"
-  hash_key = "id"
-  billing_mode = "PROVISIONED"
-  read_capacity = 5
-  write_capacity = 5
+  name = var.dynamoDB_config.name
+  hash_key = var.dynamoDB_config.hash_key
+  billing_mode = var.dynamoDB_config.billing_mode
+  read_capacity = var.dynamoDB_config.read_capacity
+  write_capacity = var.dynamoDB_config.write_capacity
   attribute {
-    name = "id"
-    type = "S"
+    name = var.dynamoDB_config.nameid
+    type = var.dynamoDB_config.type
   }
 }
 
