@@ -182,3 +182,13 @@ variable "codedeploybucket" {
     type="string"
     default="codedeploy.prod.dharmikharkhani.me"
 }
+
+variable "dns_config" {
+    type = "map"
+    default = {
+        zone_id = "Z0730370Q1R2W0D4TOJY"
+        name = "api.prod.dharmikharkhani.me"
+        type = "A"
+        ttl = "300"
+    }
+}

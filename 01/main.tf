@@ -487,9 +487,9 @@ resource "aws_codedeploy_deployment_group" "csye6225-webapp-deployment" {
 
 # DNS IP EC2 Attachment
 resource "aws_route53_record" "www" {
-  zone_id = "Z0730370Q1R2W0D4TOJY"
-  name    = "api.prod.dharmikharkhani.me"
-  type    = "A"
-  ttl     = "300"
+  zone_id = var.dns_config.zone_id
+  name    = var.dns_config.name
+  type    = var.dns_config.type
+  ttl     = var.dns_config.ttl
   records = [aws_instance.ec2webapp.public_ip]
 }
