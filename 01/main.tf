@@ -270,6 +270,32 @@ resource "aws_iam_role_policy" "WebAppS3" {
 }
 EOF
 }
+
+resource "aws_iam_role_policy" "CodeDeploy-EC2-S3" {
+  name        = "CodeDeploy-EC2-S3"
+  role = aws_iam_role.Ec2_CSYE6225.name
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "s3:Get*",
+                "s3:List*"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+              "arn:aws:s3:::${var.codedeploybucket}",
+              "arn:aws:s3:::${var.codedeploybucket}/*"
+              ]
+        }
+    ]
+}
+EOF
+}
+
+
 resource "aws_iam_role" "Ec2_CSYE6225" {
   name = "EC2-CSYE6225"
  assume_role_policy = <<EOF
@@ -339,3 +365,131 @@ resource "aws_dynamodb_table" "demoCheck" {
   }
 }
 
+# Policy for Ghactions users
+resource "aws_iam_policy" "uploadToS3Policy" {
+  name = "GH-Upload-To-S3"
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:PutObject",
+                "s3:Get*",
+                "s3:List*"
+            ],
+            "Resource": [
+                "arn:aws:s3:::${var.codedeploybucket}",
+                "arn:aws:s3:::${var.codedeploybucket}/*"
+            ]
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_user_policy_attachment" "name" {
+  user="cicd"
+  policy_arn = aws_iam_policy.uploadToS3Policy.arn
+}
+
+resource "aws_iam_user_policy" "GH-Code-Deploy" {
+  name = "GH-Code-Deploy"
+  user = "cicd"
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "codedeploy:RegisterApplicationRevision",
+        "codedeploy:GetApplicationRevision"
+      ],
+      "Resource": [
+        "arn:aws:codedeploy:${var.region}:${var.accountNumber}:application:${var.codedeploy_app_name}"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "codedeploy:CreateDeployment",
+        "codedeploy:GetDeployment"
+      ],
+      "Resource": [
+        "arn:aws:codedeploy:${var.region}:${var.accountNumber}:deploymentgroup:csye6225-webapp/csye6225-webapp-deployment"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "codedeploy:GetDeploymentConfig"
+      ],
+      "Resource": [
+        "arn:aws:codedeploy:${var.region}:${var.accountNumber}:deploymentconfig:CodeDeployDefault.OneAtATime",
+        "arn:aws:codedeploy:${var.region}:${var.accountNumber}:deploymentconfig:CodeDeployDefault.HalfAtATime",
+        "arn:aws:codedeploy:${var.region}:${var.accountNumber}:deploymentconfig:CodeDeployDefault.AllAtOnce"
+      ]
+    }
+  ]
+}
+EOF
+}
+
+
+# policy for Amazon code deploy
+resource "aws_iam_role" "CodeDeployServiceRole" {
+  name = "CodeDeployServiceRole"
+ assume_role_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": [
+                    "codedeploy.amazonaws.com"
+                ]
+            },
+            "Action": "sts:AssumeRole"
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "codeploy_role_attachment" {
+  role = aws_iam_role.CodeDeployServiceRole.id
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
+}
+
+# Creating CodeDeploy Application and Development Group
+resource "aws_codedeploy_app" "csye6225-webapp" {
+  compute_platform = "Server"
+  name="csye6225-webapp"
+}
+
+resource "aws_codedeploy_deployment_group" "csye6225-webapp-deployment" {
+  app_name = aws_codedeploy_app.csye6225-webapp.name
+  deployment_group_name ="csye6225-webapp-deployment"
+  service_role_arn = aws_iam_role.CodeDeployServiceRole.arn
+  ec2_tag_set {
+    ec2_tag_filter {
+      key   = "Name"
+      type  = "KEY_AND_VALUE"
+      value = var.ec2_config.name
+    }
+  }
+}
+
+# DNS IP EC2 Attachment
+resource "aws_route53_record" "www" {
+  zone_id = "Z0730370Q1R2W0D4TOJY"
+  name    = "api.prod.dharmikharkhani.me"
+  type    = "A"
+  ttl     = "300"
+  records = [aws_instance.ec2webapp.public_ip]
+}

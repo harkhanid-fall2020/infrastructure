@@ -4,7 +4,7 @@
  }
 
  variable "ami" {
-     default= "ami-0fb2d8a51156ea1fc"
+     default= "ami-0957aa17f43007d7c"
  }
 
  variable "vpc_cidr" {
@@ -166,4 +166,19 @@ variable "dynamoDB_config" {
         nameid = "id"
         type = "S"
     }
+}
+
+variable "codedeploy_app_name" {
+    type="string"
+    default="csye6225-webapp"
+}
+
+variable "accountNumber" {
+    type="string"
+    default="207516790970"
+}
+
+variable "codedeploybucket" {
+    type="string"
+    default="codedeploy.prod.dharmikharkhani.me"
 }
