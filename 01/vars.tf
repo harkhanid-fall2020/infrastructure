@@ -151,7 +151,7 @@ variable "ec2_config"{
         volume_size = 20
         encrypted = false
         name = "webapp"
-        key_name = "csye6225-aws"
+        key_name = "csye6225_prod_aws"
     }
 }
 
@@ -175,5 +175,10 @@ variable "codedeploy_app_name" {
 
 variable "accountNumber" {
     type="string"
-    default="933672937907"
+    default="207516790970"
+}
+
+variable "codedeploybucket" {
+    type="string"
+    default="codedeploy.prod.dharmikharkhani.me"
 }

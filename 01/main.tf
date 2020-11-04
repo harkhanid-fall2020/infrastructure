@@ -286,8 +286,8 @@ resource "aws_iam_role_policy" "CodeDeploy-EC2-S3" {
             ],
             "Effect": "Allow",
             "Resource": [
-              "arn:aws:s3:::codedeploy.dharmikharkhani.me",
-              "arn:aws:s3:::codedeploy.dharmikharkhani.me/*"
+              "arn:aws:s3:::${var.codedeploybucket}",
+              "arn:aws:s3:::${var.codedeploybucket}/*"
               ]
         }
     ]
@@ -380,8 +380,8 @@ resource "aws_iam_policy" "uploadToS3Policy" {
                 "s3:List*"
             ],
             "Resource": [
-                "arn:aws:s3:::codedeploy.dharmikharkhani.me",
-                "arn:aws:s3:::codedeploy.dharmikharkhani.me/*"
+                "arn:aws:s3:::${var.codedeploybucket}",
+                "arn:aws:s3:::${var.codedeploybucket}/*"
             ]
         }
     ]
@@ -390,13 +390,13 @@ EOF
 }
 
 resource "aws_iam_user_policy_attachment" "name" {
-  user="ghactions"
+  user="cicd"
   policy_arn = aws_iam_policy.uploadToS3Policy.arn
 }
 
 resource "aws_iam_user_policy" "GH-Code-Deploy" {
   name = "GH-Code-Deploy"
-  user = "ghactions"
+  user = "cicd"
 
   policy = <<EOF
 {
@@ -485,4 +485,11 @@ resource "aws_codedeploy_deployment_group" "csye6225-webapp-deployment" {
   }
 }
 
-
+# DNS IP EC2 Attachment
+resource "aws_route53_record" "www" {
+  zone_id = "Z0730370Q1R2W0D4TOJY"
+  name    = "api.prod.dharmikharkhani.me"
+  type    = "A"
+  ttl     = "300"
+  records = [aws_instance.ec2webapp.public_ip]
+}
