@@ -171,7 +171,7 @@ resource "aws_security_group" "database" {
     from_port   = var.db_ports_ingress[0]
     to_port     = var.db_ports_ingress[0]
     protocol    = var.tcp
-    cidr_blocks = var.pub_v4_block
+    security_groups = [aws_security_group.application.id]
   } 
   egress {
     from_port   = var.db_ports_egress[0]
@@ -236,8 +236,8 @@ resource "aws_db_instance" "default" {
   multi_az             = var.rds_config.multi_az
   identifier           = var.rds_config.identifier
   name                 = var.rds_config.name
-  username             = var.rds_config.username
-  password             = var.rds_config.password
+  username             = var.dbUsername
+  password             = var.dbPassword
   parameter_group_name = var.rds_config.parameter_group_name
   publicly_accessible  = var.rds_config.publicly_accessible
   vpc_security_group_ids = [aws_security_group.database.id]
@@ -342,8 +342,8 @@ resource "aws_instance" "ec2webapp" {
 #!/bin/bash
 sudo chmod 777 /etc/environment
 sudo echo 'db_user="webapp_database"' >> /etc/environment
-sudo echo 'db_username="${ var.rds_config.username}"' >> /etc/environment
-sudo echo 'db_password="${var.rds_config.password}"' >> /etc/environment
+sudo echo 'db_username="${ var.dbUsername}"' >> /etc/environment
+sudo echo 'db_password="${var.dbPassword}"' >> /etc/environment
 sudo echo 'db_name="${var.rds_config.name}"' >> /etc/environment
 sudo echo 'db_host="${aws_db_instance.default.endpoint }"' >> /etc/environment
 sudo echo 's3_bucket="${var.s3_vars.bucket }"' >> /etc/environment
@@ -465,6 +465,12 @@ resource "aws_iam_role_policy_attachment" "codeploy_role_attachment" {
   role = aws_iam_role.CodeDeployServiceRole.id
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
 }
+
+resource "aws_iam_role_policy_attachment" "cloudwatchagentAttachment" {
+  role = aws_iam_role.Ec2_CSYE6225.id
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
 
 # Creating CodeDeploy Application and Development Group
 resource "aws_codedeploy_app" "csye6225-webapp" {
