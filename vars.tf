@@ -134,6 +134,16 @@ variable "rds_config" {
     }
 }
 
+variable "dbUsername" {
+  type= string
+  default = ""
+}
+
+variable "dbPassword" {
+  type = string
+  default = ""
+}
+
 variable "iam_profile" {
     type = string
     default = "ec2_s3_profile"
@@ -151,7 +161,7 @@ variable "ec2_config"{
         volume_size = 20
         encrypted = false
         name = "webapp"
-        key_name = "csye6225_prod_aws"
+        key_name = "csye6225-aws"
     }
 }
 
@@ -175,19 +185,19 @@ variable "codedeploy_app_name" {
 
 variable "accountNumber" {
     type="string"
-    default="207516790970"
+    default=""
 }
 
 variable "codedeploybucket" {
     type="string"
-    default="codedeploy.prod.dharmikharkhani.me"
+    default="codedeploy.dev.dharmikharkhani.me"
 }
 
 variable "dns_config" {
     type = "map"
     default = {
-        zone_id = "Z0730370Q1R2W0D4TOJY"
-        name = "api.prod.dharmikharkhani.me"
+        zone_id = "Z064505416UL4FTE58MPJ"
+        name = "api.dev.dharmikharkhani.me"
         type = "A"
         ttl = "300"
     }
