@@ -127,8 +127,6 @@ variable "rds_config" {
         multi_az             = false
         identifier           = "csye6225-f20"
         name                 = "webapp_database"
-        username             = "csye6225fall2020"
-        password             = "Dharmik$123"
         parameter_group_name = "default.mysql5.7"
         publicly_accessible  = false
     }
@@ -161,7 +159,7 @@ variable "ec2_config"{
         volume_size = 20
         encrypted = false
         name = "webapp"
-        key_name = "csye6225-aws"
+        key_name = "csye6225_prod_aws"
     }
 }
 
@@ -190,14 +188,14 @@ variable "accountNumber" {
 
 variable "codedeploybucket" {
     type="string"
-    default="codedeploy.dev.dharmikharkhani.me"
+    default="codedeploy.prod.dharmikharkhani.me"
 }
 
 variable "dns_config" {
     type = "map"
     default = {
-        zone_id = "Z064505416UL4FTE58MPJ"
-        name = "api.dev.dharmikharkhani.me"
+        zone_id = "Z0730370Q1R2W0D4TOJY"
+        name = "api.prod.dharmikharkhani.me"
         type = "A"
         ttl = "300"
     }
