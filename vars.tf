@@ -159,7 +159,7 @@ variable "ec2_config"{
         volume_size = 20
         encrypted = false
         name = "webapp"
-        key_name = "csye6225_prod_aws"
+        key_name = "csye6225-aws"
     }
 }
 
@@ -194,9 +194,108 @@ variable "codedeploybucket" {
 variable "dns_config" {
     type = "map"
     default = {
-        zone_id = "Z0730370Q1R2W0D4TOJY"
+        zone_id = "Z064505416UL4FTE58MPJ"
         name = "api.prod.dharmikharkhani.me"
-        type = "A"
+        type = "CNAME"
         ttl = "300"
+    }
+}
+
+variable "alias" {
+    type = "map"
+    default = {
+        name="prod.dharmikharkhani.me"
+        type="A"
+    }
+}
+
+variable "auto_scaling_config" {
+  type = "string"
+  default = {
+      instance_type="t2.micro"
+  }
+}
+
+varible "auto_scaling_group" {
+    type = "map"
+    default = {
+        health_check_type = "EC2"
+        health_check_grace_period = 300
+        min_size = 3
+        max_size = 5
+        desired_capacity = 3
+    }
+}
+
+variable "scaleup_policy" {
+    type = "map"
+    default = {
+        name = "WebAppScaleUp"
+        scaling_adjustment = 1
+        adjustment_type = "ChangeInCapacity"
+        cooldown = 60
+    }
+}
+
+variable "scaledown_policy" {
+    type = "map"
+    default = {
+        name = "WebAppScaleDown"
+        scaling_adjustment = -1
+        adjustment_type = "ChangeInCapacity"
+        cooldown = 60
+    }
+}
+
+
+variable "scaleUpAlert" {
+    type = "map"
+    default = {
+        alarm_name = "highMetricAlarm"
+        comparison_operator = "GreaterThanOrEqualToThreshold"
+        evaluation_periods = "1"
+        metric_name = "CPUUtilization"
+        namespace = "AWS/EC2"
+        period = "300"
+        statistic = "Average"
+        threshold = "5"
+        alarm_description = "It will give alarm if EC2 CPU utilization is high"
+    }
+}
+
+
+
+variable "scaledownAlert" {
+    type = "map"
+    default = {
+        alarm_name = "lowMetricAlarm"
+        comparison_operator = "LessThanOrEqualToThreshold"
+        evaluation_periods = "1"
+        metric_name = "CPUUtilization"
+        namespace = "AWS/EC2"
+        period = "300"
+        statistic = "Average"
+        threshold = "3"
+        alarm_description = "It will give alarm if EC2 CPU utilization is high"
+    }
+}
+
+variable "lb_config" {
+    type = "map"
+    default = {
+        name               = "webapp-lb"
+        load_balancer_type = "application"
+        internal           = false 
+        protocol = "HTTP"
+        port = 80
+    }
+}
+
+variable "tg_config" {
+    type = "map"
+    default = {
+        name     = "webapp-tg"
+        port     = 3000
+        protocol = "HTTP"
     }
 }

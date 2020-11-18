@@ -87,61 +87,61 @@ resource "aws_security_group" "application" {
   description = var.app_name
   vpc_id      = aws_vpc.vpc_webapp.id 
 
-  ingress {
-    from_port   = var.app_ports_ingress[0]
-    to_port     = var.app_ports_ingress[0]
-    protocol    = var.tcp
-    cidr_blocks = var.pub_v4_block
-  }
+  # ingress {
+  #   from_port   = var.app_ports_ingress[0]
+  #   to_port     = var.app_ports_ingress[0]
+  #   protocol    = var.tcp
+  #   cidr_blocks = var.pub_v4_block
+  # }
 
-  ingress {
-    from_port   = var.app_ports_ingress[1]
-    to_port     = var.app_ports_ingress[1]
-    protocol    = var.tcp
-    cidr_blocks = var.pub_v4_block
-  }
-
-  ingress {
-    from_port   = var.app_ports_ingress[2]
-    to_port     = var.app_ports_ingress[2]
-    protocol    = var.tcp
-    cidr_blocks = var.pub_v4_block
-  }
-
-  ingress {
-    from_port   = var.app_ports_ingress[3]
-    to_port     = var.app_ports_ingress[3]
-    protocol    = var.tcp
-    cidr_blocks = var.pub_v4_block
-  }
-
-  ingress {
-    from_port   = var.app_ports_ingress[0]
-    to_port     = var.app_ports_ingress[0]
-    protocol    = var.tcp
-    ipv6_cidr_blocks = var.pub_v6_block
-  }
-
- ingress {
-    from_port   = var.app_ports_ingress[1]
-    to_port     = var.app_ports_ingress[1]
-    protocol    = var.tcp
-    ipv6_cidr_blocks = var.pub_v6_block
-  }
+  # ingress {
+  #   from_port   = var.app_ports_ingress[1]
+  #   to_port     = var.app_ports_ingress[1]
+  #   protocol    = var.tcp
+  #   cidr_blocks = var.pub_v4_block
+  # }
 
   ingress {
     from_port   = var.app_ports_ingress[2]
     to_port     = var.app_ports_ingress[2]
     protocol    = var.tcp
-    ipv6_cidr_blocks = var.pub_v6_block
+    cidr_blocks = var.pub_v4_block
   }
 
+  # ingress {
+  #   from_port   = var.app_ports_ingress[3]
+  #   to_port     = var.app_ports_ingress[3]
+  #   protocol    = var.tcp
+  #   cidr_blocks = var.pub_v4_block
+  # }
+
+#   ingress {
+#     from_port   = var.app_ports_ingress[0]
+#     to_port     = var.app_ports_ingress[0]
+#     protocol    = var.tcp
+#     ipv6_cidr_blocks = var.pub_v6_block
+#   }
+
+#  ingress {
+#     from_port   = var.app_ports_ingress[1]
+#     to_port     = var.app_ports_ingress[1]
+#     protocol    = var.tcp
+#     ipv6_cidr_blocks = var.pub_v6_block
+#   }
+
   ingress {
-    from_port   = var.app_ports_ingress[3]
-    to_port     = var.app_ports_ingress[3]
+    from_port   = var.app_ports_ingress[2]
+    to_port     = var.app_ports_ingress[2]
     protocol    = var.tcp
     ipv6_cidr_blocks = var.pub_v6_block
   }
+
+  # ingress {
+  #   from_port   = var.app_ports_ingress[3]
+  #   to_port     = var.app_ports_ingress[3]
+  #   protocol    = var.tcp
+  #   ipv6_cidr_blocks = var.pub_v6_block
+  # }
   
   egress {
     from_port   = var.app_ports_egress[0]
@@ -162,6 +162,38 @@ resource "aws_security_group" "application" {
   }
 }
 
+resource "aws_security_group" "EC2Application" {
+  name        = "EC2Application"
+  description = "EC2Application"
+  vpc_id      = aws_vpc.vpc_webapp.id 
+
+  
+  ingress {
+    from_port   = var.app_ports_egress[0]
+    to_port     = var.app_ports_egress[0]
+    protocol    = "-1"
+    security_groups = [aws_security_group.application.id]
+  }
+  
+  egress {
+    from_port   = var.app_ports_egress[0]
+    to_port     = var.app_ports_egress[0]
+    protocol    = "-1"
+    cidr_blocks = var.pub_v4_block
+  }
+
+   egress {
+    from_port   = var.app_ports_egress[1]
+    to_port     = var.app_ports_egress[1]
+    protocol    = var.tcp
+    cidr_blocks = var.pub_v4_block
+  }
+  tags = {
+    Name = "EC2Application"
+  }
+}
+
+
 resource "aws_security_group" "database" {
   name        = var.db_name
   description = var.db_name
@@ -171,7 +203,7 @@ resource "aws_security_group" "database" {
     from_port   = var.db_ports_ingress[0]
     to_port     = var.db_ports_ingress[0]
     protocol    = var.tcp
-    security_groups = [aws_security_group.application.id]
+    security_groups = [aws_security_group.EC2Application.id]
   } 
   egress {
     from_port   = var.db_ports_egress[0]
@@ -320,36 +352,36 @@ resource "aws_iam_instance_profile" "ec2_s3profile" {
   role = aws_iam_role.Ec2_CSYE6225.name
 }
 
-resource "aws_instance" "ec2webapp" {
-  ami                           = var.ami
-  vpc_security_group_ids        = [aws_security_group.application.id]
-  associate_public_ip_address   = var.ec2_config.associate_public_ip_address
-  instance_type                 = var.ec2_config.instance_type
-  subnet_id = aws_subnet.subnet1.id
-  ebs_block_device {
-    delete_on_termination = var.ec2_config.delete_on_termination
-    device_name = var.ec2_config.device_name
-    volume_type = var.ec2_config.volume_type
-    volume_size = var.ec2_config.volume_size
-    encrypted = var.ec2_config.encrypted
-  }
-  tags = {
-    "Name" = var.ec2_config.name
-  }
-  iam_instance_profile = aws_iam_instance_profile.ec2_s3profile.id
-  key_name = var.ec2_config.key_name
-  user_data = <<EOF
-#!/bin/bash
-sudo chmod 777 /etc/environment
-sudo echo 'db_user="webapp_database"' >> /etc/environment
-sudo echo 'db_username="${ var.dbUsername}"' >> /etc/environment
-sudo echo 'db_password="${var.dbPassword}"' >> /etc/environment
-sudo echo 'db_name="${var.rds_config.name}"' >> /etc/environment
-sudo echo 'db_host="${aws_db_instance.default.endpoint }"' >> /etc/environment
-sudo echo 's3_bucket="${var.s3_vars.bucket }"' >> /etc/environment
-sudo echo 's3_region="${var.region }"' >> /etc/environment
-EOF
-}
+# resource "aws_instance" "ec2webapp" {
+#   ami                           = var.ami
+#   vpc_security_group_ids        = [aws_security_group.application.id]
+#   associate_public_ip_address   = var.ec2_config.associate_public_ip_address
+#   instance_type                 = var.ec2_config.instance_type
+#   subnet_id = aws_subnet.subnet1.id
+#   root_block_device {
+#     delete_on_termination = var.ec2_config.delete_on_termination
+#     # device_name = var.ec2_config.device_name
+#     volume_type = var.ec2_config.volume_type
+#     volume_size = var.ec2_config.volume_size
+#     encrypted = var.ec2_config.encrypted
+#   }
+#   tags = {
+#     "Name" = var.ec2_config.name
+#   }
+#   iam_instance_profile = aws_iam_instance_profile.ec2_s3profile.id
+#   key_name = var.ec2_config.key_name
+#   user_data = <<EOF
+# #!/bin/bash
+# sudo chmod 777 /etc/environment
+# sudo echo 'db_user="webapp_database"' >> /etc/environment
+# sudo echo 'db_username="${ var.dbUsername}"' >> /etc/environment
+# sudo echo 'db_password="${var.dbPassword}"' >> /etc/environment
+# sudo echo 'db_name="${var.rds_config.name}"' >> /etc/environment
+# sudo echo 'db_host="${aws_db_instance.default.endpoint }"' >> /etc/environment
+# sudo echo 's3_bucket="${var.s3_vars.bucket }"' >> /etc/environment
+# sudo echo 's3_region="${var.region }"' >> /etc/environment
+# EOF
+# }
 
 
 # dynamoDB table
@@ -497,5 +529,150 @@ resource "aws_route53_record" "www" {
   name    = var.dns_config.name
   type    = var.dns_config.type
   ttl     = var.dns_config.ttl
-  records = [aws_instance.ec2webapp.public_ip]
+  records = [aws_lb.webapp-lb.dns_name]
 }
+
+resource "aws_route53_record" "wwwAlias" {
+  zone_id = var.dns_config.zone_id
+  name    = var.alias.name
+  type    = var.type
+
+  alias {
+    name                   = aws_lb.webapp-lb.dns_name
+    zone_id                = aws_lb.webapp-lb.zone_id
+    evaluate_target_health = true
+  }
+}
+
+# auto scaling configuration
+resource "aws_launch_configuration" "aws_launch_config" {
+  name = "asg_launch_config"
+  image_id = var.ami
+  instance_type = var.auto_scaling_config.t2.micro
+  associate_public_ip_address = true
+  iam_instance_profile = aws_iam_instance_profile.ec2_s3profile.id
+  key_name = var.ec2_config.key_name
+  security_groups = [aws_security_group.EC2Application.id]
+  user_data =  <<EOF
+#!/bin/bash
+sudo chmod 777 /etc/environment
+sudo echo 'db_user="webapp_database"' >> /etc/environment
+sudo echo 'db_username="${ var.dbUsername}"' >> /etc/environment
+sudo echo 'db_password="${var.dbPassword}"' >> /etc/environment
+sudo echo 'db_name="${var.rds_config.name}"' >> /etc/environment
+sudo echo 'db_host="${aws_db_instance.default.endpoint }"' >> /etc/environment
+sudo echo 's3_bucket="${var.s3_vars.bucket }"' >> /etc/environment
+sudo echo 's3_region="${var.region }"' >> /etc/environment
+EOF
+  
+}
+
+
+resource "aws_autoscaling_group" "webapp-autoscaling-group" {
+  name = "webapp-autoscaling-group"
+  launch_configuration = aws_launch_configuration.aws_launch_config.name
+  health_check_type    = var.auto_scaling_group.health_check_type
+  health_check_grace_period = var.auto_scaling_group.health_check_grace_period
+  target_group_arns = [ aws_lb_target_group.webapp-tg.arn ]
+  #load_balancers = [ aws_lb.webapp-lb.name ]
+  min_size             = var.auto_scaling_group.min_size
+  desired_capacity     = var.auto_scaling_group.desired_capacity
+  max_size             = var.auto_scaling_group.max_size
+  vpc_zone_identifier =  [aws_subnet.subnet1.id,aws_subnet.subnet2.id,aws_subnet.subnet3.id]
+  
+  tag {
+    key                 = "Name"
+    value               = var.ec2_config.name
+    propagate_at_launch = true
+  }
+}
+
+# Auto scaling Policy
+
+resource "aws_autoscaling_policy" "WebAppScaleUp" {
+  name = var.scaleup_policy.name
+  scaling_adjustment = var.scaleup_policy.scaling_adjustment
+  adjustment_type = var.scaleup_policy.adjustment_type
+  cooldown = var.scaleup_policy.cooldown
+  autoscaling_group_name = aws_autoscaling_group.webapp-autoscaling-group.name
+}
+
+resource "aws_autoscaling_policy" "WebAppScaleDown" {
+  name = var.scaledown_policy.name
+  scaling_adjustment = var.scaledown_policy.scaling_adjustment
+  adjustment_type = var.scaledown_policy.adjustment_type
+  cooldown = var.scaledown_policy.cooldown
+  autoscaling_group_name = aws_autoscaling_group.webapp-autoscaling-group.name
+}
+
+resource "aws_cloudwatch_metric_alarm" "hightMetricAlarm" {
+     alarm_name = var.scaleUpAlert.alarm_name
+    comparison_operator = var.scaleUpAlert.comparison_operator
+    evaluation_periods = var.scaleUpAlert.evaluation_periods
+    metric_name = var.scaleUpAlert.metric_name
+    namespace = var.scaleUpAlert.metric_name
+    period = var.scaleUpAlert.period
+    statistic = var.scaleUpAlert.statistic
+    threshold = var.scaleUpAlert.threshold
+    alarm_description = var.scaleUpAlert.alarm_description
+    alarm_actions = [
+        aws_autoscaling_policy.WebAppScaleUp.arn
+    ]
+    dimensions = {
+        AutoScalingGroupName = aws_autoscaling_group.webapp-autoscaling-group.name
+    }
+}
+
+resource "aws_cloudwatch_metric_alarm" "lowMetricAlarm" {
+    alarm_name = var.scaledownAlert.alarm_name
+    comparison_operator = var.scaledownAlert.comparison_operator
+    evaluation_periods = var.scaledownAlert.evaluation_periods
+    metric_name = var.scaledownAlert.metric_name
+    namespace = var.scaledownAlert.metric_name
+    period = var.scaledownAlert.period
+    statistic = var.scaledownAlert.statistic
+    threshold = var.scscaledownAlertaleUpAlert.threshold
+    alarm_description = var.scaledownAlert.alarm_description
+    alarm_actions = [
+        aws_autoscaling_policy.WebAppScaleDown.arn
+    ]
+    dimensions = {
+        AutoScalingGroupName = aws_autoscaling_group.webapp-autoscaling-group.name
+    }
+}
+
+
+# Load balancer config
+
+
+resource "aws_lb" "webapp-lb" {
+  name               = var.lb_config.name
+  load_balancer_type = var.lb_config.load_balancer_type
+  internal           = var.lb_config.internal 
+  subnets=[aws_subnet.subnet1.id,aws_subnet.subnet2.id,aws_subnet.subnet3.id]
+  security_groups =  [aws_security_group.application.id]
+}
+
+resource "aws_lb_listener" "name" {
+  load_balancer_arn = aws_lb.webapp-lb.arn
+  protocol = var.lb_config.protocol
+  port = var.lb_config.port
+  
+  default_action {
+    target_group_arn = aws_lb_target_group.webapp-tg.arn
+    type             = "forward"
+  }
+
+}
+
+resource "aws_lb_target_group" "webapp-tg" {
+  name     = var.tg_config.name
+  port     = var.tg_config.port
+  protocol = var.tg_config.protocol
+  vpc_id   = aws_vpc.vpc_webapp.id
+}
+
+# resource "aws_autoscaling_attachment" "target_group_attach" {
+#   autoscaling_group_name =  aws_autoscaling_group.webapp-autoscaling-group.id
+#   alb_target_group_arn  = aws_alb_target_group.webapp-tg.arn 
+# }
