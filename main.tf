@@ -514,6 +514,7 @@ resource "aws_codedeploy_deployment_group" "csye6225-webapp-deployment" {
   app_name = aws_codedeploy_app.csye6225-webapp.name
   deployment_group_name ="csye6225-webapp-deployment"
   service_role_arn = aws_iam_role.CodeDeployServiceRole.arn
+  autoscaling_groups = [aws_autoscaling_group.webapp-autoscaling-group.name]
   ec2_tag_set {
     ec2_tag_filter {
       key   = "Name"
@@ -521,6 +522,7 @@ resource "aws_codedeploy_deployment_group" "csye6225-webapp-deployment" {
       value = var.ec2_config.name
     }
   }
+  
 }
 
 # DNS IP EC2 Attachment
@@ -535,7 +537,7 @@ resource "aws_route53_record" "www" {
 resource "aws_route53_record" "wwwAlias" {
   zone_id = var.dns_config.zone_id
   name    = var.alias.name
-  type    = var.type
+  type    = var.alias.type
 
   alias {
     name                   = aws_lb.webapp-lb.dns_name
@@ -548,7 +550,7 @@ resource "aws_route53_record" "wwwAlias" {
 resource "aws_launch_configuration" "aws_launch_config" {
   name = "asg_launch_config"
   image_id = var.ami
-  instance_type = var.auto_scaling_config.t2.micro
+  instance_type = var.auto_scaling_config.instance_type
   associate_public_ip_address = true
   iam_instance_profile = aws_iam_instance_profile.ec2_s3profile.id
   key_name = var.ec2_config.key_name
@@ -610,10 +612,10 @@ resource "aws_cloudwatch_metric_alarm" "hightMetricAlarm" {
     comparison_operator = var.scaleUpAlert.comparison_operator
     evaluation_periods = var.scaleUpAlert.evaluation_periods
     metric_name = var.scaleUpAlert.metric_name
-    namespace = var.scaleUpAlert.metric_name
+    namespace = var.scaleUpAlert.namespace
     period = var.scaleUpAlert.period
     statistic = var.scaleUpAlert.statistic
-    threshold = var.scaleUpAlert.threshold
+    threshold = var.upLimit
     alarm_description = var.scaleUpAlert.alarm_description
     alarm_actions = [
         aws_autoscaling_policy.WebAppScaleUp.arn
@@ -628,10 +630,10 @@ resource "aws_cloudwatch_metric_alarm" "lowMetricAlarm" {
     comparison_operator = var.scaledownAlert.comparison_operator
     evaluation_periods = var.scaledownAlert.evaluation_periods
     metric_name = var.scaledownAlert.metric_name
-    namespace = var.scaledownAlert.metric_name
+    namespace = var.scaledownAlert.namespace
     period = var.scaledownAlert.period
     statistic = var.scaledownAlert.statistic
-    threshold = var.scscaledownAlertaleUpAlert.threshold
+    threshold = var.downLimit
     alarm_description = var.scaledownAlert.alarm_description
     alarm_actions = [
         aws_autoscaling_policy.WebAppScaleDown.arn
@@ -657,7 +659,6 @@ resource "aws_lb_listener" "name" {
   load_balancer_arn = aws_lb.webapp-lb.arn
   protocol = var.lb_config.protocol
   port = var.lb_config.port
-  
   default_action {
     target_group_arn = aws_lb_target_group.webapp-tg.arn
     type             = "forward"
