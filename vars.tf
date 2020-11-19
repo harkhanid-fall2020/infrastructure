@@ -159,7 +159,7 @@ variable "ec2_config"{
         volume_size = 20
         encrypted = false
         name = "webapp"
-        key_name = "csye6225-aws"
+        key_name = "csye6225_prod_aws"
     }
 }
 
@@ -194,7 +194,7 @@ variable "codedeploybucket" {
 variable "dns_config" {
     type = "map"
     default = {
-        zone_id = "Z064505416UL4FTE58MPJ"
+        zone_id = "Z0730370Q1R2W0D4TOJY"
         name = "api.prod.dharmikharkhani.me"
         type = "CNAME"
         ttl = "300"
@@ -210,13 +210,13 @@ variable "alias" {
 }
 
 variable "auto_scaling_config" {
-  type = "string"
+  type = "map"
   default = {
       instance_type="t2.micro"
   }
 }
 
-varible "auto_scaling_group" {
+variable "auto_scaling_group" {
     type = "map"
     default = {
         health_check_type = "EC2"
@@ -253,10 +253,10 @@ variable "scaleUpAlert" {
     default = {
         alarm_name = "highMetricAlarm"
         comparison_operator = "GreaterThanOrEqualToThreshold"
-        evaluation_periods = "1"
+        evaluation_periods = "2"
         metric_name = "CPUUtilization"
         namespace = "AWS/EC2"
-        period = "300"
+        period = "120"
         statistic = "Average"
         threshold = "5"
         alarm_description = "It will give alarm if EC2 CPU utilization is high"
@@ -270,10 +270,10 @@ variable "scaledownAlert" {
     default = {
         alarm_name = "lowMetricAlarm"
         comparison_operator = "LessThanOrEqualToThreshold"
-        evaluation_periods = "1"
+        evaluation_periods = "2"
         metric_name = "CPUUtilization"
         namespace = "AWS/EC2"
-        period = "300"
+        period = "120"
         statistic = "Average"
         threshold = "3"
         alarm_description = "It will give alarm if EC2 CPU utilization is high"
@@ -299,3 +299,13 @@ variable "tg_config" {
         protocol = "HTTP"
     }
 }
+
+variable "upLimit" {
+    type = "string"
+    default = "5"
+} 
+
+variable "downLimit" {
+    type = "string"
+    default = "3"
+} 
