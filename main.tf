@@ -327,6 +327,28 @@ resource "aws_iam_role_policy" "CodeDeploy-EC2-S3" {
 EOF
 }
 
+resource "aws_iam_role_policy" "Lambda-EC2-SNS" {
+  name        = "Lambda-EC2-SNS"
+  role = aws_iam_role.Ec2_CSYE6225.name
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Stmt1606874860075",
+      "Action": [
+        "sns:CreateTopic",
+        "sns:Publish"
+      ],
+      "Effect": "Allow",
+      "Resource": "${aws_sns_topic.answerTopics.arn}"
+    }
+  ]
+}
+EOF
+}
+
 
 resource "aws_iam_role" "Ec2_CSYE6225" {
   name = "EC2-CSYE6225"
@@ -352,40 +374,40 @@ resource "aws_iam_instance_profile" "ec2_s3profile" {
   role = aws_iam_role.Ec2_CSYE6225.name
 }
 
-# resource "aws_instance" "ec2webapp" {
-#   ami                           = var.ami
-#   vpc_security_group_ids        = [aws_security_group.application.id]
-#   associate_public_ip_address   = var.ec2_config.associate_public_ip_address
-#   instance_type                 = var.ec2_config.instance_type
-#   subnet_id = aws_subnet.subnet1.id
-#   root_block_device {
-#     delete_on_termination = var.ec2_config.delete_on_termination
-#     # device_name = var.ec2_config.device_name
-#     volume_type = var.ec2_config.volume_type
-#     volume_size = var.ec2_config.volume_size
-#     encrypted = var.ec2_config.encrypted
-#   }
-#   tags = {
-#     "Name" = var.ec2_config.name
-#   }
-#   iam_instance_profile = aws_iam_instance_profile.ec2_s3profile.id
-#   key_name = var.ec2_config.key_name
-#   user_data = <<EOF
-# #!/bin/bash
-# sudo chmod 777 /etc/environment
-# sudo echo 'db_user="webapp_database"' >> /etc/environment
-# sudo echo 'db_username="${ var.dbUsername}"' >> /etc/environment
-# sudo echo 'db_password="${var.dbPassword}"' >> /etc/environment
-# sudo echo 'db_name="${var.rds_config.name}"' >> /etc/environment
-# sudo echo 'db_host="${aws_db_instance.default.endpoint }"' >> /etc/environment
-# sudo echo 's3_bucket="${var.s3_vars.bucket }"' >> /etc/environment
-# sudo echo 's3_region="${var.region }"' >> /etc/environment
-# EOF
-# }
+resource "aws_instance" "ec2webapp" {
+  ami                           = var.ami
+  vpc_security_group_ids        = [aws_security_group.application.id]
+  associate_public_ip_address   = var.ec2_config.associate_public_ip_address
+  instance_type                 = var.ec2_config.instance_type
+  subnet_id = aws_subnet.subnet1.id
+  root_block_device {
+    delete_on_termination = var.ec2_config.delete_on_termination
+    # device_name = var.ec2_config.device_name
+    volume_type = var.ec2_config.volume_type
+    volume_size = var.ec2_config.volume_size
+    encrypted = var.ec2_config.encrypted
+  }
+  tags = {
+    "Name" = var.ec2_config.name
+  }
+  iam_instance_profile = aws_iam_instance_profile.ec2_s3profile.id
+  key_name = var.ec2_config.key_name
+  user_data = <<EOF
+#!/bin/bash
+sudo chmod 777 /etc/environment
+sudo echo 'db_user="webapp_database"' >> /etc/environment
+sudo echo 'db_username="${ var.dbUsername}"' >> /etc/environment
+sudo echo 'db_password="${var.dbPassword}"' >> /etc/environment
+sudo echo 'db_name="${var.rds_config.name}"' >> /etc/environment
+sudo echo 'db_host="${aws_db_instance.default.endpoint }"' >> /etc/environment
+sudo echo 's3_bucket="${var.s3_vars.bucket }"' >> /etc/environment
+sudo echo 's3_region="${var.region }"' >> /etc/environment
+EOF
+}
 
 
-# dynamoDB table
-resource "aws_dynamodb_table" "demoCheck" {
+# # dynamoDB table
+resource "aws_dynamodb_table" "dynamoDBId" {
   name = var.dynamoDB_config.name
   hash_key = var.dynamoDB_config.hash_key
   billing_mode = var.dynamoDB_config.billing_mode
@@ -396,6 +418,8 @@ resource "aws_dynamodb_table" "demoCheck" {
     type = var.dynamoDB_config.type
   }
 }
+
+
 
 # Policy for Ghactions users
 resource "aws_iam_policy" "uploadToS3Policy" {
@@ -565,8 +589,9 @@ sudo echo 'db_name="${var.rds_config.name}"' >> /etc/environment
 sudo echo 'db_host="${aws_db_instance.default.endpoint }"' >> /etc/environment
 sudo echo 's3_bucket="${var.s3_vars.bucket }"' >> /etc/environment
 sudo echo 's3_region="${var.region }"' >> /etc/environment
+sudo echo 'domain="${var.alias.name }"' >> /etc/environment
+sudo echo 'TopicArn="${aws_sns_topic.answerTopics.arn }"' >> /etc/environment
 EOF
-  
 }
 
 
@@ -677,3 +702,122 @@ resource "aws_lb_target_group" "webapp-tg" {
 #   autoscaling_group_name =  aws_autoscaling_group.webapp-autoscaling-group.id
 #   alb_target_group_arn  = aws_alb_target_group.webapp-tg.arn 
 # }
+
+#SNS Policy
+
+resource "aws_sns_topic" "answerTopics" {
+  name = "answerTopics"
+}
+
+
+# lambda function
+
+
+resource "aws_iam_role" "iam_for_lambda" {
+  name = "iam_for_lambda"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+
+
+resource "aws_iam_policy" "DynamoDBPolicy" {
+  name = "DynamoDBPolicy"
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Stmt1606872775543",
+      "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem"
+      ],
+      "Effect": "Allow",
+      "Resource": "${aws_dynamodb_table.dynamoDBId.arn}"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_dynamoDB_attachment" {
+  role = aws_iam_role.iam_for_lambda.id
+  policy_arn = aws_iam_policy.DynamoDBPolicy.arn
+}
+
+
+resource "aws_iam_role_policy_attachment" "lambda_basic_attachment" {
+  role = aws_iam_role.iam_for_lambda.id
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+resource "aws_iam_role_policy_attachment" "lambda_ses_attachment" {
+  role = aws_iam_role.iam_for_lambda.id
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSESFullAccess"
+}
+
+resource "aws_lambda_function" "lambda_id" {
+  filename      = "lambda.zip"
+  function_name = "SendMail_lambda"
+  role          = aws_iam_role.iam_for_lambda.arn
+  handler       = "index.handler"
+
+  source_code_hash = filebase64sha256("lambda.zip")
+
+  runtime = "nodejs12.x"
+
+  environment {
+    variables = {
+      Name = "MailLambda"
+    }
+  }
+}
+
+resource "aws_iam_user_policy_attachment" "cicdLambda" {
+  user="cicdLambda"
+  policy_arn = aws_iam_policy.uploadToS3Policy.arn
+}
+
+resource "aws_iam_policy" "CICDLambdaPolicy" {
+  name = "CICDLambdaPolicy"
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": "lambda:UpdateFunctionCode",
+            "Resource": "${aws_lambda_function.lambda_id.arn}"
+        }
+    ]
+}
+EOF
+}
+
+
+resource "aws_sns_topic_subscription" "sns_lambda_target" {
+  topic_arn = aws_sns_topic.answerTopics.arn
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.lambda_id.arn
+}
+
+resource "aws_lambda_permission" "with_sns" {
+  statement_id  = "AllowExecutionFromSNS"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_id.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.answerTopics.arn
+}
