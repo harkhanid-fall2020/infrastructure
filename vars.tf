@@ -159,7 +159,7 @@ variable "ec2_config"{
         volume_size = 20
         encrypted = false
         name = "webapp"
-        key_name = "csye6225_prod_aws"
+        key_name = "csye6225-aws"
     }
 }
 
@@ -188,14 +188,14 @@ variable "accountNumber" {
 
 variable "codedeploybucket" {
     type="string"
-    default="codedeploy.prod.dharmikharkhani.me"
+    default="codedeploy.dev.dharmikharkhani.me"
 }
 
 variable "dns_config" {
     type = "map"
     default = {
-        zone_id = "Z0730370Q1R2W0D4TOJY"
-        name = "api.prod.dharmikharkhani.me"
+        zone_id = "Z064505416UL4FTE58MPJ"
+        name = "api.dev.dharmikharkhani.me"
         type = "CNAME"
         ttl = "300"
     }
@@ -204,7 +204,7 @@ variable "dns_config" {
 variable "alias" {
     type = "map"
     default = {
-        name="prod.dharmikharkhani.me"
+        name="dev.dharmikharkhani.me"
         type="A"
     }
 }
@@ -221,9 +221,9 @@ variable "auto_scaling_group" {
     default = {
         health_check_type = "EC2"
         health_check_grace_period = 300
-        min_size = 3
-        max_size = 5
-        desired_capacity = 3
+        min_size = 1
+        max_size = 2
+        desired_capacity = 1
     }
 }
 
