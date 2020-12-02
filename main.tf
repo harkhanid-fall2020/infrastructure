@@ -743,7 +743,8 @@ resource "aws_iam_policy" "DynamoDBPolicy" {
       "Sid": "Stmt1606872775543",
       "Action": [
         "dynamodb:GetItem",
-        "dynamodb:PutItem"
+        "dynamodb:PutItem",
+        "dynamodb:Scan"
       ],
       "Effect": "Allow",
       "Resource": "${aws_dynamodb_table.dynamoDBId.arn}"
@@ -787,7 +788,7 @@ resource "aws_lambda_function" "lambda_id" {
 
 resource "aws_iam_user_policy_attachment" "cicdLambda" {
   user="cicdLambda"
-  policy_arn = aws_iam_policy.uploadToS3Policy.arn
+  policy_arn = aws_iam_policy.CICDLambdaPolicy.arn
 }
 
 resource "aws_iam_policy" "CICDLambdaPolicy" {
