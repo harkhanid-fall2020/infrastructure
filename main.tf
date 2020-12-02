@@ -169,9 +169,9 @@ resource "aws_security_group" "EC2Application" {
 
   
   ingress {
-    from_port   = var.app_ports_egress[0]
-    to_port     = var.app_ports_egress[0]
-    protocol    = "-1"
+    from_port   = var.app_ports_ingress[3]
+    to_port     = var.app_ports_ingress[3]
+    protocol    = var.tcp
     security_groups = [aws_security_group.application.id]
   }
   
