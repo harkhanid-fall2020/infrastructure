@@ -374,36 +374,36 @@ resource "aws_iam_instance_profile" "ec2_s3profile" {
   role = aws_iam_role.Ec2_CSYE6225.name
 }
 
-resource "aws_instance" "ec2webapp" {
-  ami                           = var.ami
-  vpc_security_group_ids        = [aws_security_group.application.id]
-  associate_public_ip_address   = var.ec2_config.associate_public_ip_address
-  instance_type                 = var.ec2_config.instance_type
-  subnet_id = aws_subnet.subnet1.id
-  root_block_device {
-    delete_on_termination = var.ec2_config.delete_on_termination
-    # device_name = var.ec2_config.device_name
-    volume_type = var.ec2_config.volume_type
-    volume_size = var.ec2_config.volume_size
-    encrypted = var.ec2_config.encrypted
-  }
-  tags = {
-    "Name" = var.ec2_config.name
-  }
-  iam_instance_profile = aws_iam_instance_profile.ec2_s3profile.id
-  key_name = var.ec2_config.key_name
-  user_data = <<EOF
-#!/bin/bash
-sudo chmod 777 /etc/environment
-sudo echo 'db_user="webapp_database"' >> /etc/environment
-sudo echo 'db_username="${ var.dbUsername}"' >> /etc/environment
-sudo echo 'db_password="${var.dbPassword}"' >> /etc/environment
-sudo echo 'db_name="${var.rds_config.name}"' >> /etc/environment
-sudo echo 'db_host="${aws_db_instance.default.endpoint }"' >> /etc/environment
-sudo echo 's3_bucket="${var.s3_vars.bucket }"' >> /etc/environment
-sudo echo 's3_region="${var.region }"' >> /etc/environment
-EOF
-}
+# resource "aws_instance" "ec2webapp" {
+#   ami                           = var.ami
+#   vpc_security_group_ids        = [aws_security_group.application.id]
+#   associate_public_ip_address   = var.ec2_config.associate_public_ip_address
+#   instance_type                 = var.ec2_config.instance_type
+#   subnet_id = aws_subnet.subnet1.id
+#   root_block_device {
+#     delete_on_termination = var.ec2_config.delete_on_termination
+#     # device_name = var.ec2_config.device_name
+#     volume_type = var.ec2_config.volume_type
+#     volume_size = var.ec2_config.volume_size
+#     encrypted = var.ec2_config.encrypted
+#   }
+#   tags = {
+#     "Name" = var.ec2_config.name
+#   }
+#   iam_instance_profile = aws_iam_instance_profile.ec2_s3profile.id
+#   key_name = var.ec2_config.key_name
+#   user_data = <<EOF
+# #!/bin/bash
+# sudo chmod 777 /etc/environment
+# sudo echo 'db_user="webapp_database"' >> /etc/environment
+# sudo echo 'db_username="${ var.dbUsername}"' >> /etc/environment
+# sudo echo 'db_password="${var.dbPassword}"' >> /etc/environment
+# sudo echo 'db_name="${var.rds_config.name}"' >> /etc/environment
+# sudo echo 'db_host="${aws_db_instance.default.endpoint }"' >> /etc/environment
+# sudo echo 's3_bucket="${var.s3_vars.bucket }"' >> /etc/environment
+# sudo echo 's3_region="${var.region }"' >> /etc/environment
+# EOF
+# }
 
 
 # # dynamoDB table
