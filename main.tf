@@ -102,8 +102,8 @@ resource "aws_security_group" "application" {
   # }
 
   ingress {
-    from_port   = var.app_ports_ingress[2]
-    to_port     = var.app_ports_ingress[2]
+    from_port   = var.app_ports_ingress[1]
+    to_port     = var.app_ports_ingress[1]
     protocol    = var.tcp
     cidr_blocks = var.pub_v4_block
   }
@@ -130,8 +130,8 @@ resource "aws_security_group" "application" {
 #   }
 
   ingress {
-    from_port   = var.app_ports_ingress[2]
-    to_port     = var.app_ports_ingress[2]
+    from_port   = var.app_ports_ingress[1]
+    to_port     = var.app_ports_ingress[1]
     protocol    = var.tcp
     ipv6_cidr_blocks = var.pub_v6_block
   }
@@ -150,12 +150,12 @@ resource "aws_security_group" "application" {
     cidr_blocks = var.pub_v4_block
   }
 
-  egress {
-    from_port   = var.app_ports_egress[1]
-    to_port     = var.app_ports_egress[1]
-    protocol    = var.tcp
-    cidr_blocks = var.pub_v4_block
-  }
+  # egress {
+  #   from_port   = var.app_ports_egress[1]
+  #   to_port     = var.app_ports_egress[1]
+  #   protocol    = var.tcp
+  #   cidr_blocks = var.pub_v4_block
+  # }
 
   tags = {
     Name = var.app_name
@@ -174,6 +174,14 @@ resource "aws_security_group" "EC2Application" {
     protocol    = var.tcp
     security_groups = [aws_security_group.application.id]
   }
+
+    ingress {
+    from_port   = var.app_ports_ingress[0]
+    to_port     = var.app_ports_ingress[0]
+    protocol    = var.tcp
+    cidr_blocks = var.pub_v4_block
+  }
+
   
   egress {
     from_port   = var.app_ports_egress[0]
@@ -261,21 +269,35 @@ subnet_ids = [aws_subnet.subnet1.id,aws_subnet.subnet2.id]
 resource "aws_db_instance" "default" {
   allocated_storage    = var.rds_config.allocated_storage
   storage_type         = var.rds_config.storage_type
+  parameter_group_name = aws_db_parameter_group.webapp_rds.name
   engine               = var.rds_config.engine
   engine_version       = var.rds_config.engine_version
   db_subnet_group_name = aws_db_subnet_group.db-subnet-group.id
   instance_class       = var.rds_config.instance_class
+  storage_encrypted    = var.rds_config.storage_encrypted
   multi_az             = var.rds_config.multi_az
   identifier           = var.rds_config.identifier
   name                 = var.rds_config.name
   username             = var.dbUsername
   password             = var.dbPassword
-  parameter_group_name = var.rds_config.parameter_group_name
+  #parameter_group_name = var.rds_config.parameter_group_name
   publicly_accessible  = var.rds_config.publicly_accessible
   vpc_security_group_ids = [aws_security_group.database.id]
   skip_final_snapshot	= true
 }
 
+
+resource "aws_db_parameter_group" "webapp_rds" {
+  name   = "rds-pg"
+  family = "mysql5.7"
+
+  parameter {
+    name  = "performance_schema"
+    value = "1"
+    apply_method = "pending-reboot"
+  }
+
+}
 resource "aws_iam_role_policy" "WebAppS3" {
   name        = "WebAppS3"
   role = aws_iam_role.Ec2_CSYE6225.name
@@ -683,7 +705,11 @@ resource "aws_lb" "webapp-lb" {
 resource "aws_lb_listener" "name" {
   load_balancer_arn = aws_lb.webapp-lb.arn
   protocol = var.lb_config.protocol
-  port = var.lb_config.port
+  port = 443
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = "arn:aws:acm:us-east-1:207516790970:certificate/3480fd25-f3c7-46a5-8a24-97bd2c398475"
+
+  
   default_action {
     target_group_arn = aws_lb_target_group.webapp-tg.arn
     type             = "forward"
