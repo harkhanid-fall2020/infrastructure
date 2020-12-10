@@ -102,8 +102,8 @@ resource "aws_security_group" "application" {
   # }
 
   ingress {
-    from_port   = var.app_ports_ingress[2]
-    to_port     = var.app_ports_ingress[2]
+    from_port   = var.app_ports_ingress[1]
+    to_port     = var.app_ports_ingress[1]
     protocol    = var.tcp
     cidr_blocks = var.pub_v4_block
   }
@@ -130,8 +130,8 @@ resource "aws_security_group" "application" {
 #   }
 
   ingress {
-    from_port   = var.app_ports_ingress[2]
-    to_port     = var.app_ports_ingress[2]
+    from_port   = var.app_ports_ingress[1]
+    to_port     = var.app_ports_ingress[1]
     protocol    = var.tcp
     ipv6_cidr_blocks = var.pub_v6_block
   }
@@ -150,12 +150,12 @@ resource "aws_security_group" "application" {
     cidr_blocks = var.pub_v4_block
   }
 
-  egress {
-    from_port   = var.app_ports_egress[1]
-    to_port     = var.app_ports_egress[1]
-    protocol    = var.tcp
-    cidr_blocks = var.pub_v4_block
-  }
+  # egress {
+  #   from_port   = var.app_ports_egress[1]
+  #   to_port     = var.app_ports_egress[1]
+  #   protocol    = var.tcp
+  #   cidr_blocks = var.pub_v4_block
+  # }
 
   tags = {
     Name = var.app_name
@@ -174,6 +174,14 @@ resource "aws_security_group" "EC2Application" {
     protocol    = var.tcp
     security_groups = [aws_security_group.application.id]
   }
+
+    ingress {
+    from_port   = var.app_ports_ingress[0]
+    to_port     = var.app_ports_ingress[0]
+    protocol    = var.tcp
+    cidr_blocks = var.pub_v4_block
+  }
+
   
   egress {
     from_port   = var.app_ports_egress[0]
@@ -261,21 +269,35 @@ subnet_ids = [aws_subnet.subnet1.id,aws_subnet.subnet2.id]
 resource "aws_db_instance" "default" {
   allocated_storage    = var.rds_config.allocated_storage
   storage_type         = var.rds_config.storage_type
+  parameter_group_name = aws_db_parameter_group.webapp_rds.name
   engine               = var.rds_config.engine
   engine_version       = var.rds_config.engine_version
   db_subnet_group_name = aws_db_subnet_group.db-subnet-group.id
   instance_class       = var.rds_config.instance_class
+  storage_encrypted    = var.rds_config.storage_encrypted
   multi_az             = var.rds_config.multi_az
   identifier           = var.rds_config.identifier
   name                 = var.rds_config.name
   username             = var.dbUsername
   password             = var.dbPassword
-  parameter_group_name = var.rds_config.parameter_group_name
+  #parameter_group_name = var.rds_config.parameter_group_name
   publicly_accessible  = var.rds_config.publicly_accessible
   vpc_security_group_ids = [aws_security_group.database.id]
   skip_final_snapshot	= true
 }
 
+
+resource "aws_db_parameter_group" "webapp_rds" {
+  name   = "rds-pg"
+  family = "mysql5.7"
+
+  parameter {
+    name  = "performance_schema"
+    value = "1"
+    apply_method = "pending-reboot"
+  }
+
+}
 resource "aws_iam_role_policy" "WebAppS3" {
   name        = "WebAppS3"
   role = aws_iam_role.Ec2_CSYE6225.name
@@ -374,36 +396,36 @@ resource "aws_iam_instance_profile" "ec2_s3profile" {
   role = aws_iam_role.Ec2_CSYE6225.name
 }
 
-resource "aws_instance" "ec2webapp" {
-  ami                           = var.ami
-  vpc_security_group_ids        = [aws_security_group.application.id]
-  associate_public_ip_address   = var.ec2_config.associate_public_ip_address
-  instance_type                 = var.ec2_config.instance_type
-  subnet_id = aws_subnet.subnet1.id
-  root_block_device {
-    delete_on_termination = var.ec2_config.delete_on_termination
-    # device_name = var.ec2_config.device_name
-    volume_type = var.ec2_config.volume_type
-    volume_size = var.ec2_config.volume_size
-    encrypted = var.ec2_config.encrypted
-  }
-  tags = {
-    "Name" = var.ec2_config.name
-  }
-  iam_instance_profile = aws_iam_instance_profile.ec2_s3profile.id
-  key_name = var.ec2_config.key_name
-  user_data = <<EOF
-#!/bin/bash
-sudo chmod 777 /etc/environment
-sudo echo 'db_user="webapp_database"' >> /etc/environment
-sudo echo 'db_username="${ var.dbUsername}"' >> /etc/environment
-sudo echo 'db_password="${var.dbPassword}"' >> /etc/environment
-sudo echo 'db_name="${var.rds_config.name}"' >> /etc/environment
-sudo echo 'db_host="${aws_db_instance.default.endpoint }"' >> /etc/environment
-sudo echo 's3_bucket="${var.s3_vars.bucket }"' >> /etc/environment
-sudo echo 's3_region="${var.region }"' >> /etc/environment
-EOF
-}
+# resource "aws_instance" "ec2webapp" {
+#   ami                           = var.ami
+#   vpc_security_group_ids        = [aws_security_group.application.id]
+#   associate_public_ip_address   = var.ec2_config.associate_public_ip_address
+#   instance_type                 = var.ec2_config.instance_type
+#   subnet_id = aws_subnet.subnet1.id
+#   root_block_device {
+#     delete_on_termination = var.ec2_config.delete_on_termination
+#     # device_name = var.ec2_config.device_name
+#     volume_type = var.ec2_config.volume_type
+#     volume_size = var.ec2_config.volume_size
+#     encrypted = var.ec2_config.encrypted
+#   }
+#   tags = {
+#     "Name" = var.ec2_config.name
+#   }
+#   iam_instance_profile = aws_iam_instance_profile.ec2_s3profile.id
+#   key_name = var.ec2_config.key_name
+#   user_data = <<EOF
+# #!/bin/bash
+# sudo chmod 777 /etc/environment
+# sudo echo 'db_user="webapp_database"' >> /etc/environment
+# sudo echo 'db_username="${ var.dbUsername}"' >> /etc/environment
+# sudo echo 'db_password="${var.dbPassword}"' >> /etc/environment
+# sudo echo 'db_name="${var.rds_config.name}"' >> /etc/environment
+# sudo echo 'db_host="${aws_db_instance.default.endpoint }"' >> /etc/environment
+# sudo echo 's3_bucket="${var.s3_vars.bucket }"' >> /etc/environment
+# sudo echo 's3_region="${var.region }"' >> /etc/environment
+# EOF
+# }
 
 
 # # dynamoDB table
@@ -683,7 +705,11 @@ resource "aws_lb" "webapp-lb" {
 resource "aws_lb_listener" "name" {
   load_balancer_arn = aws_lb.webapp-lb.arn
   protocol = var.lb_config.protocol
-  port = var.lb_config.port
+  port = 443
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = "arn:aws:acm:us-east-1:207516790970:certificate/3480fd25-f3c7-46a5-8a24-97bd2c398475"
+
+  
   default_action {
     target_group_arn = aws_lb_target_group.webapp-tg.arn
     type             = "forward"

@@ -14,3 +14,9 @@ packer init
 packer plan
 packer apply
 ```
+
+Command to Add certificate:
+```yml
+aws acm import-certificate --certificate fileb://prod_dharmikharkhanicr.pem --private-key fileb://prod_dharmikharkhanipk.rsa --certificate-chain fileb://prod_dharmikharkhanica.pem
+
+```

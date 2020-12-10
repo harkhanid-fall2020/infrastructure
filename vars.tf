@@ -125,6 +125,7 @@ variable "rds_config" {
         engine_version       = "5.7"
         instance_class       = "db.t3.micro"
         multi_az             = false
+        storage_encrypted    = true
         identifier           = "csye6225-f20"
         name                 = "webapp_database"
         parameter_group_name = "default.mysql5.7"
@@ -221,9 +222,9 @@ variable "auto_scaling_group" {
     default = {
         health_check_type = "EC2"
         health_check_grace_period = 300
-        min_size = 1
-        max_size = 2
-        desired_capacity = 1
+        min_size = 3
+        max_size = 5
+        desired_capacity = 3
     }
 }
 
@@ -286,8 +287,8 @@ variable "lb_config" {
         name               = "webapp-lb"
         load_balancer_type = "application"
         internal           = false 
-        protocol = "HTTP"
-        port = 80
+        protocol = "HTTPS"
+        port = 443
     }
 }
 
